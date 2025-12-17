@@ -1,0 +1,19 @@
+# Core dependencies
+langchain==0.3.13
+langchain-openai==0.2.14
+langchain-community==0.3.13
+langchain-google-community==2.0.6
+
+# Google Cloud
+google-cloud-bigquery==3.28.0
+sqlalchemy-bigquery==1.11.0
+google-cloud-secret-manager==2.21.1
+
+# Utilities
+python-dotenv==1.0.1
+rich==13.9.4
+pandas==2.2.3
+
+# Optional for enhanced features
+pydantic==2.10.3
+pydantic-settings==2.6.1
