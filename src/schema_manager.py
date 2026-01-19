@@ -179,24 +179,25 @@ class SchemaManager:
 ## Query Guidelines:
 
 1. Always use the full table name in queries: `{full_table}`
-2. Use appropriate WHERE clauses to filter data
-3. Consider using LIMIT to restrict result size
-4. Use aggregation functions (AVG, MAX, MIN, COUNT) for analytics
-5. Format timestamps appropriately for time-based queries
-6. Use LIKE for partial text matching on location fields
+2. When creating a lat/long buffer in the query try and use ST_DWITHIN for better performance
+    2a. Always convert rqst_lat_num and rqst_long_num from FLOAT64 to GEOGRAPHY type using ST_GEOGPOINT
+3. Use appropriate WHERE clauses to filter data
+4. Consider using LIMIT to restrict result size
+5. Use aggregation functions (AVG, MAX, MIN, COUNT) for analytics
+6. Format timestamps appropriately for time-based queries
 
 ## Example Queries:
 
 ```sql
--- Get current weather for a specific location
-SELECT * FROM `{full_table}` 
-WHERE location = 'Toronto' 
-LIMIT 10;
-
--- Get average temperature by location
-SELECT location, AVG(temperature) as avg_temp 
+-- Get current weather for a specific location (e.x. TORONTO)
+SELECT tmprtr_amt, ST_BUFFER(ST_GEOGPOINT(-79.39, 43.67), 1000) AS buffer_polygon 
 FROM `{full_table}` 
-GROUP BY location;
+LIMIT 25;
+
+-- Find all locations within 5km of a point
+SELECT * 
+FROM `{full_table}` 
+WHERE ST_DWITHIN(ST_GEOGPOINT(rqst_long_num, rqst_lat_num), ST_GEOGPOINT(-79.39, 43.67), 5000);
 
 -- Get recent weather data
 SELECT * FROM `{full_table}` 

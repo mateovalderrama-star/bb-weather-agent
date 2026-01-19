@@ -96,7 +96,7 @@ class WeatherCopilot:
         elif cmd == '/schema':
             return {
                 'success': True,
-                'answer': self.agent.get_schema_info(),
+                'answer': self.agent.get_schema_info(include_samples=False),
                 'is_command': True
             }
         
@@ -144,19 +144,20 @@ class WeatherCopilot:
             'answer': agent_result['answer'],
             'question': agent_result['question']
         }
-        
-        # Add metadata if available
-        if 'intermediate_steps' in agent_result and agent_result['intermediate_steps']:
-            # Extract SQL queries from intermediate steps
-            sql_queries = []
-            for step in agent_result['intermediate_steps']:
-                if len(step) >= 2:
-                    action = step[0]
-                    if hasattr(action, 'tool_input'):
-                        sql_queries.append(action.tool_input)
+        # uncomment below to include sql queries in the response
+
+        # Add metadata if available 
+        # if 'intermediate_steps' in agent_result and agent_result['intermediate_steps']:
+        #     # Extract SQL queries from intermediate steps
+        #     sql_queries = []
+        #     for step in agent_result['intermediate_steps']:
+        #         if len(step) >= 2:
+        #             action = step[0]
+        #             if hasattr(action, 'tool_input'):
+        #                 sql_queries.append(action.tool_input)
             
-            if sql_queries:
-                response['sql_queries'] = sql_queries
+        #     if sql_queries:
+        #         response['sql_queries'] = sql_queries
         
         return response
     
@@ -165,12 +166,11 @@ class WeatherCopilot:
         return """
 Weather Agent - Available Commands:
 
-/help       - Show this help message
-/schema     - Display the weather data table schema
-/history    - Show conversation history
-/clear      - Clear conversation history
-/status     - Show system status
-/exit       - Exit the application
+- /help       - Show this help message
+- /schema     - Display the weather data table schema
+- /history    - Show conversation history
+- /clear      - Clear conversation history
+- /status     - Show system status
 
 Example Queries:
 - "What's the current weather in Toronto?"

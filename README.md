@@ -297,4 +297,4 @@ For issues or questions, contact the AIA Special Projects or Bumblebee Team.
 - Built with [Langchain](https://python.langchain.com/)
 - Powered by [OpenAI](https://openai.com/)
 - Data from [Google BigQuery](https://cloud.google.com/bigquery)
-- UI with [Rich](https://rich.readthedocs.io/)
+- UI with [Streamlit](https://docs.streamlit.io/)

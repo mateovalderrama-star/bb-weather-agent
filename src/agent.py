@@ -1,7 +1,6 @@
 """Langchain SQL agent for querying weather data."""
 import logging
 from typing import Optional, Dict, Any
-from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
 from langchain.tools import tool
@@ -52,13 +51,32 @@ class WeatherAgent:
                 df = self.bq_helper.execute_query(query)
                 return df.to_string()
             
+            @tool
+            def validate_query(query: str) -> bool:
+                """
+                Validate a SQL query without executing it using bigquery helper.
+                
+                Args:
+                    query: SQL query to validate
+                    
+                Returns:
+                    True if query is valid, False otherwise
+                """
+                try:
+                    return self.bq_helper.validate_query(query)
+                except Exception as e:
+                    logger.error(f"Query validation failed: {e}")
+                    return False
+
+            
             # Create SQL agent
             logger.info("Creating Langchain tool-calling agent") # TODO: Dynamic Model
             self.agent = create_agent(                           # TODO: Include a cache mechanism, for common locations (cities) by polygons in a txt file, have the agent refer to it first
                 model=self.llm,
-                tools=[execute_bigquery],
+                tools=[execute_bigquery, validate_query],
                 system_prompt= """You are a helpful weather data expert. You have access to BigQuery tools. 
-                Make sure that the query does not include any destructive methods before executing."""
+                Make sure that the query does not include any destructive methods before executing.
+                Always validate the query before execution. If the query is invalid, read the error message and write a corrected query."""
             )
             # TODO: Vectorize fire data, and use metadata based filtering
             logger.info("Weather agent initialized successfully")
@@ -101,7 +119,6 @@ class WeatherAgent:
             response = {
                 'question': question,
                 'answer': answer,
-                'intermediate_steps': result.get('intermediate_steps', []),
                 'success': True
             }
             
@@ -128,7 +145,7 @@ class WeatherAgent:
             Enhanced question with context
         """
         # Get schema context
-        schema_context = self.schema_manager.get_full_context(include_samples=False)
+        schema_context = self.schema_manager.get_full_context(include_samples=True)
         #TODO: Optimize SQL generation in step 2 for faster performance
         enhanced = f"""
 You are a helpful assistant that answers questions about weather data stored in BigQuery.
@@ -136,17 +153,16 @@ You are a helpful assistant that answers questions about weather data stored in 
 {schema_context}
 
 Important Instructions:
-1. Always use the full table name: `{self.config.get_full_table_name()}`
-2. Generate SQL queries to answer the user's question 
-3. Limit results to {self.config.MAX_QUERY_RESULTS} rows unless specifically asked for more
-4. Format your final answer in a clear, human-readable way
-5. If you need to make assumptions, state them clearly
-6. Only perform SELECT queries - no INSERT, UPDATE, or DELETE operations
+1. Generate SQL queries to answer the user's question 
+2. Format your final answer in a clear, human-readable way
+3. Do not include the SQL query in your final answer unless explicitly requested
+4. If you need to make assumptions, state them clearly
+5. Only perform SELECT queries - no INSERT, UPDATE, or DELETE operations
 
 User Question: {question}
 """
         
-        return enhanced
+        return enhanced #TODO: Can add javascript within the SQL for more complex processing
     
     def get_schema_info(self) -> str:
         """
@@ -157,54 +173,4 @@ User Question: {question}
         """
         return self.schema_manager.get_full_context(include_samples=True)
     
-    # def validate_connection(self) -> bool:
-    #     """
-    #     Validate the database connection.
-        
-    #     Returns:
-    #         True if connection is valid, False otherwise
-    #     """
-    #     try:
-    #         # Try to get table names
-    #         tables = self.db.get_usable_table_names()
-    #         logger.info(f"Connected to database. Available tables: {tables}")
-    #         return True
-    #     except Exception as e:
-    #         logger.error(f"Database connection validation failed: {e}")
-    #         return False
     
-    def execute_raw_sql(self, sql_query: str) -> Dict[str, Any]:
-        """
-        Execute a raw SQL query directly.
-        
-        Args:
-            sql_query: SQL query to execute
-            
-        Returns:
-            Query results
-        """
-        try:
-            logger.info(f"Executing raw SQL: {sql_query[:200]}...")
-            
-            # Validate query is SELECT only
-            if not sql_query.strip().upper().startswith('SELECT'):
-                return {
-                    'success': False,
-                    'error': 'Only SELECT queries are allowed'
-                }
-            
-            result = self.db.run(sql_query)
-            
-            return {
-                'success': True,
-                'result': result,
-                'query': sql_query
-            }
-            
-        except Exception as e:
-            logger.error(f"Error executing raw SQL: {e}")
-            return {
-                'success': False,
-                'error': str(e),
-                'query': sql_query
-            }

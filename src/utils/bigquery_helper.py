@@ -143,8 +143,7 @@ class BigQueryHelper:
                 'num_bytes': table.num_bytes,
                 'created': table.created,
                 'modified': table.modified,
-                'description': table.description or '',
-                'schema': self.get_table_schema(dataset_id, table_id)
+                'description': table.description or ''
             }
             
             logger.info(f"Retrieved table info for {table_ref}")
@@ -174,36 +173,3 @@ class BigQueryHelper:
             logger.error(f"Query validation failed: {e}")
             return False
     
-    def estimate_query_cost(self, query: str) -> Dict[str, Any]:
-        """
-        Estimate the cost of running a query.
-        
-        Args:
-            query: SQL query to estimate
-            
-        Returns:
-            Dictionary with cost estimation details
-        """
-        try:
-            job_config = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False)
-            query_job = self.client.query(query, job_config=job_config)
-            
-            # BigQuery pricing: $5 per TB processed
-            bytes_processed = query_job.total_bytes_processed
-            tb_processed = bytes_processed / (1024 ** 4)
-            estimated_cost = tb_processed * 5
-            
-            estimation = {
-                'bytes_processed': bytes_processed,
-                'mb_processed': bytes_processed / (1024 ** 2),
-                'gb_processed': bytes_processed / (1024 ** 3),
-                'tb_processed': tb_processed,
-                'estimated_cost_usd': round(estimated_cost, 4)
-            }
-            
-            logger.info(f"Query will process {estimation['gb_processed']:.2f} GB")
-            return estimation
-            
-        except Exception as e:
-            logger.error(f"Error estimating query cost: {e}")
-            raise

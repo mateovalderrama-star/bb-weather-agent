@@ -33,8 +33,8 @@ class Config:
     BIGQUERY_TABLE: str = os.getenv("BIGQUERY_TABLE", "bq_weather_current")
     
     # Proxy Configuration
-    HTTP_PROXY: Optional[str] = os.getenv("HTTP_PROXY", '')
-    HTTPS_PROXY: Optional[str] = os.getenv("HTTPS_PROXY", '')
+    HTTP_PROXY: Optional[str] = os.getenv("HTTP_PROXY", 'http://198.161.14.25:8080')
+    HTTPS_PROXY: Optional[str] = os.getenv("HTTPS_PROXY", 'http://198.161.14.25:8080')
     NO_PROXY: Optional[str] = os.getenv("NO_PROXY", 'localhost,127.0.0.1')
     
     # Agent Configuration
