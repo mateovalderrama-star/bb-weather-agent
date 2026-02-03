@@ -89,7 +89,7 @@ The system follows this flow:
 
 Run the main application:
 ```bash
-python main.py
+streamlit run streamlit_ui.py
 ```
 
 ### Example Queries

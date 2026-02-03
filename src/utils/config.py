@@ -19,7 +19,7 @@ class Config:
     
     # OpenAI Configuration
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-5")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "claude-sonnet-4-5")
     TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0.1"))
     
     # GCP Configuration
