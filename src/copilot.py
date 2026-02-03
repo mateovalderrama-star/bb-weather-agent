@@ -205,8 +205,6 @@ System Status:
 ✓ LLM Model: {self.config.OPENAI_MODEL}
 ✓ Conversation History: {len(self.conversation_history)} messages
 ✓ Max Query Results: {self.config.MAX_QUERY_RESULTS}
-
-Connection: {'Valid' if self.agent.validate_connection() else 'Invalid'}
 """
         return status
     

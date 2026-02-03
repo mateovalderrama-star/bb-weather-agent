@@ -164,7 +164,7 @@ python test_config.py
 ### Development Mode
 
 ```bash
-python streamlit_ui.py
+streamlit run streamlit_ui.py
 ```
 
 ### Custom Port

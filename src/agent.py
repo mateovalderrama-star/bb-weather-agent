@@ -4,7 +4,6 @@ from typing import Optional, Dict, Any
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
 from langchain.tools import tool
-from langchain_classic.agents.agent import AgentExecutor
 from src.utils.config import Config
 from src.schema_manager import SchemaManager
 from src.utils.bigquery_helper import BigQueryHelper
@@ -49,7 +48,7 @@ class WeatherAgent:
                     Query results as a string
                 """
                 df = self.bq_helper.execute_query(query)
-                return df.to_string()
+                return df
             
             @tool
             def validate_query(query: str) -> bool:
@@ -76,7 +75,10 @@ class WeatherAgent:
                 tools=[execute_bigquery, validate_query],
                 system_prompt= """You are a helpful weather data expert. You have access to BigQuery tools. 
                 Make sure that the query does not include any destructive methods before executing.
-                Always validate the query before execution. If the query is invalid, read the error message and write a corrected query."""
+                Always validate the query before execution. If the query is invalid, read the error message and write a corrected query.
+                The BigQuery table you have access to does sorts data by latitude and longitude as FLOAT64, not location name. 
+                If asked about location, analyze the resulting latitude and longitude to determine an approximate location name.
+                Make sure to use the correct column names as per the schema, and create location buffers following the schema guidelines."""
             )
             # TODO: Vectorize fire data, and use metadata based filtering
             logger.info("Weather agent initialized successfully")
@@ -145,7 +147,7 @@ class WeatherAgent:
             Enhanced question with context
         """
         # Get schema context
-        schema_context = self.schema_manager.get_full_context(include_samples=True)
+        schema_context = self.schema_manager.get_full_context(include_samples=False)
         #TODO: Optimize SQL generation in step 2 for faster performance
         enhanced = f"""
 You are a helpful assistant that answers questions about weather data stored in BigQuery.
@@ -172,5 +174,4 @@ User Question: {question}
             Formatted schema information
         """
         return self.schema_manager.get_full_context(include_samples=True)
-    
     
