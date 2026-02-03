@@ -1,0 +1,116 @@
+# Weather Data Table Schema
+
+**Table**: `cio-datahub-enterprise-pr-183a.ent_common_location.bq_weather_current`
+**Description**: Enterprise table to store weather current conditions data from IBM environment environmental intelligence api
+**Total Rows**: 219338028 rows *Last updated 01-20-2026
+**Last Modified**: 2026-01-20 11:22:27.675000+00:00
+
+## Available Fields:
+
+- **rqst_lat_num** (FLOAT): DESCRIPTION: Latitude specified in the original request. Only included in POINT and MULTIPOINT query results.
+
+- **rqst_long_num** (FLOAT): DESCRIPTION: Longitude specified in the original request. Only included in POINT and MULTIPOINT query results.
+
+- **cloud_clg_str** (STRING): DESCRIPTION: Base of lowest Mostly Cloudy or Cloudy layer.
+
+- **cloud_cvr_phrs_str** (STRING): DESCRIPTION: Descriptive sky cover - based on percentage of cloud cover.
+
+- **day_wk_str** (STRING): DESCRIPTION: Day of week.
+
+- **day_nite_str** (STRING): DESCRIPTION: Daytime or nighttime of the local apparent time of the location.
+
+- **expir_tm_utc_str** (STRING): DESCRIPTION: This expiration time indicates the data within the response will be outdated.
+
+- **icon_cd_num** (INTEGER): DESCRIPTION: The data field shows the icon number that is matched to represent the observed weather conditions.
+
+- **icon_extnd_cd_num** (INTEGER): DESCRIPTION: A four digit code representing the full set of sensible weather icons.  These codes are companions to iconCode with more specificity.
+
+- **obs_qlfr_cd** (STRING): DESCRIPTION: The observation qualifier. It provides a qualitative description of current conditions, comparing the observation to climate averages, records, precip reports, severe weather warnings, etc.
+
+- **obs_qlfr_sevrty_str** (STRING): DESCRIPTION: An objective index or enumeration of the severity or significance of the observation qualifier.
+
+- **precip_1_hr_amt** (FLOAT): DESCRIPTION: Rolling one-hour liquid precip amount.
+
+- **precip_6_hr_amt** (FLOAT): DESCRIPTION: Rolling six-hour liquid precip amount.
+
+- **precip_24_hr_amt** (FLOAT): DESCRIPTION: Rolling twenty-four hour liquid precip amount.
+
+- **pressure_alti_mtr_num** (FLOAT): DESCRIPTION: Barometric pressure is the pressure exerted by the atmosphere at the Earth’s surface due to the weight of the air. Altitude can be determined based on the measurement of barometric  pressure. The lower the pressure, the greater the altitude.
+
+- **pressure_chng_amt** (FLOAT): DESCRIPTION: Change in pressure in the last three hours.
+
+- **pressure_mean_sea_lvl_amt** (FLOAT): DESCRIPTION: Mean sea level pressure in millibars.  In other words, the average barometric pressure at sea level.
+
+- **pressure_tendency_cd_num** (INTEGER): DESCRIPTION: Code for pressureTendencyTrend.
+
+- **pressure_tendency_trend_str** (STRING): DESCRIPTION: Descriptive text of pressure tendency over the past three hours.  Indicates whether pressure is steady, rising, or falling.
+
+- **rel_humidity_amt** (FLOAT): DESCRIPTION: The relative humidity of the air, which is defined as the ratio of the amount of water vapor in the air to the amount of vapor required to bring the air to saturation at a constant temperature. Relative humidity is always expressed as a percentage.
+
+- **snow_1_hr_amt** (FLOAT): DESCRIPTION: Rolling one-hour snowfall amount.
+
+- **snow_6_hr_amt** (FLOAT): DESCRIPTION: Rolling six-hour snowfall amount.
+
+- **snow_24_hr_amt** (FLOAT): DESCRIPTION: Rolling twenty-four hour snowfall amount.
+
+- **sunrise_tm_lcl_str** (STRING): DESCRIPTION: This field contains the local time of sunrise. It reflects any local daylight savings conventions.
+
+- **sunrise_tm_utc_str** (STRING): DESCRIPTION: Sunrise time in UNIX epoch value.
+
+- **sunset_tm_lcl_str** (STRING): DESCRIPTION: This field contains the local time of the sunset. It reflects any local daylight savings conventions.
+
+- **sunset_tm_utc_str** (STRING): DESCRIPTION: Sunset time in UNIX epoch value.
+
+- **tmprtr_amt** (FLOAT): DESCRIPTION: Temperature in defined unit of measure.
+
+- **tmprtr_chng_24_hr_amt** (FLOAT): DESCRIPTION: Change in temperature compared to the report 24 hours ago.
+
+- **tmprtr_dew_pt_amt** (FLOAT): DESCRIPTION: The temperature which air must be cooled at constant pressure to reach saturation. The Dew Point is also an indirect measure of the humidity of the air. The Dew Point will never exceed the Temperature. When the Dewpoint and Temperature are equal, clouds or fog will typically form. The closer the values of Temperature and Dew Point, the higher the relative humidity.
+
+- **tmprtr_feel_like_amt** (FLOAT): DESCRIPTION: An apparent temperature. It represents what the air temperature feels like on exposed human skin due to the combined effect of the wind chill or heat index.When the temperature is 65°F or higher, the Feels Like value represents the computed Heat Index.  When the temperature is below 65°F, the Feels Like value represents the computed Wind Chil.
+
+- **tmprtr_heat_indx_num** (FLOAT): DESCRIPTION: An apparent temperature.  It represents what the air temperature feels like on exposed human skin due to the combined effect of warm temperatures and high humidity.
+
+- **tmprtr_max_24_hr_amt** (FLOAT): DESCRIPTION: The maximum temperature in the last 24 hours.  The 24 hour period is in reference to the request time (now).
+
+- **tmprtr_max_since7am_amt** (FLOAT): DESCRIPTION: The maximum temperature since 7 A.M. local time.
+
+- **tmprtr_min_24_hr_amt** (FLOAT): DESCRIPTION: The minimum temperature in the last 24 hours.  The 24 hour period is in reference to the request time (now).
+
+- **tmprtr_wind_chill_amt** (FLOAT): DESCRIPTION: An apparent temperature. It represents what the air temperature feels like on exposed human skin due to the combined effect of the cold temperatures and wind speed
+
+- **uv_desc_str** (STRING): DESCRIPTION: The UV Index Description which complements the uvIndex value by providing an associated level of risk of skin damage due to exposure
+
+- **uv_indx_num** (INTEGER): DESCRIPTION: TWCs proprietary UV index.  The UV Index provides indices of the intensity of the solar radiation level and risk of skin damage due to exposure
+
+- **valid_tm_lcl_str** (STRING): DESCRIPTION: Time observation is valid in local.
+
+- **valid_tm_utc_str** (STRING): DESCRIPTION: Time observation is valid in UNIX epoch value.
+
+- **visibility_num** (FLOAT): DESCRIPTION: The horizontal visibility at the observation point. Visibilities can be reported as fractional values particularly when visibility is less than 2 miles. Visibilities greater than 10 statute miles(16.1 kilometers) which are considered unlimited are reported as 999 in your feed. You can also find visibility values that equal zero. This occurrence is not wrong. Dense fogs and heavy snows can produce values near zero. Fog, smoke, heavy rain and other weather phenomena can reduce visibility to near zero miles or kilometers
+
+- **wind_dir_num** (FLOAT): DESCRIPTION: The magnetic wind direction from which the wind blows expressed in degrees. The magnetic direction varies from 0 to 359 degrees, where 0° indicates the North, 90° the East, 180° the South, 270° the West, and so forth
+
+- **wind_dir_cardinal_str** (STRING): DESCRIPTION: Wind directions are always expressed as from whence the wind blows meaning that a North wind blows from North to South. If you face North in a North wind, the wind is at your face. Face southward and the North wind is at your back
+
+- **wind_gust_amt** (FLOAT): DESCRIPTION: This data field contains information about sudden and temporary variations of the average Wind Speed. The report always shows the maximum wind gust speed recorded during the observation period. It is a required display field if Wind Speed is shown. The speed of the gust can be expressed in miles per hour or kilometers per hour 
+
+- **wind_speed_amt** (FLOAT): DESCRIPTION: The wind is treated as a vector; hence, winds must have direction and magnitude (speed). The wind information reported in the current conditions corresponds to a 10-minute average called the sustained wind speed. Sudden or brief variations in the wind speed are known as wind gusts and are reported in a separate data field. Wind directions are always expressed as from whence the wind blows meaning that a North wind blows from North to South. If you face North in a North wind the wind is at your face. Face southward and the North wind is at your back.
+
+- **wx_phrs_long_str** (STRING): DESCRIPTION: A text description of observed weather conditions accompanying the iconCode field
+
+- **wx_phrs_mdm_str** (STRING): DESCRIPTION: A text description of observed weather conditions accompanying the iconCode field
+
+- **wx_phrs_short_str** (STRING): DESCRIPTION: A text description of observed weather conditions accompanying the iconCode field
+
+- **create_ts** (TIMESTAMP): DESCRIPTION: Audit attribute identifying when a row was created. EXAMPLES:21/03/2011 4:53:17 PM COMMENTS: ARCHITECTURE CONSIDERATIONS:
+
+- **create_user_id** (STRING): DESCRIPTION: Audit attribute identifying when a row was created. EXAMPLES:21/03/2011 4:53:17 PM COMMENTS: ARCHITECTURE CONSIDERATIONS:
+
+- **last_updt_ts** (TIMESTAMP): DESCRIPTION: Audit Attribute. The date and time the record was last updated in the data warehouse. EXAMPLES: COMMENTS: ARCHITECTURE CONSIDERATIONS:
+
+- **last_updt_user_id** (STRING): DESCRIPTION: Audit attribute identifying the userid or program name of the user/program that last updated this row. EXAMPLES:IL, gjames1, svc_wfmadmin COMMENTS: ARCHITECTURE CONSIDERATIONS: 
+
+- **file_name** (STRING): DESCRIPTION: Audit attribute identifying source file name.
+
+- **snpsht_ts** (TIMESTAMP): This is snapshot column

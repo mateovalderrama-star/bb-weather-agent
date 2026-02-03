@@ -1,7 +1,8 @@
 """Schema manager for BigQuery weather data table."""
 
 import logging
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
+from pathlib import Path
 from src.utils.bigquery_helper import BigQueryHelper
 from src.utils.config import Config
 
@@ -18,6 +19,7 @@ class SchemaManager:
         self.table_id = Config.BIGQUERY_TABLE
         self._schema_cache = None
         self._table_info_cache = None
+        self._schema_description_cache: Optional[str] = None
     
     def get_schema(self) -> List[Dict[str, Any]]:
         """
@@ -49,89 +51,28 @@ class SchemaManager:
     
     def get_schema_description(self) -> str:
         """
-        Generate a human-readable schema description for the LLM.
+        Generate a human-readable schema description for the LLM by reading from a local file
+        rather than querying BigQuery.
         
         Returns:
-            Formatted schema description
+            Formatted schema description read from weather_table_schema.txt
         """
-        schema = self.get_schema()
-        table_info = self.get_table_info()
+        # Use cached content if available
+        if self._schema_description_cache is not None:
+            return self._schema_description_cache
         
-        description = f"""
-# Weather Data Table Schema
-
-**Table**: `{table_info['full_table_id']}`
-**Description**: {table_info.get('description', 'Current weather data from various locations')}
-**Total Rows**: {table_info['num_rows']:,}
-**Last Modified**: {table_info['modified']}
-
-## Available Fields:
-
-"""
-        
-        for field in schema:
-            field_desc = f"- **{field['name']}** ({field['type']})"
-            if field['description']:
-                field_desc += f": {field['description']}"
-            else:
-                # Add common weather field descriptions
-                field_desc += f": {self._get_field_description(field['name'])}"
-            
-            if field['mode'] == 'REPEATED':
-                field_desc += " [ARRAY]"
-            elif field['mode'] == 'REQUIRED':
-                field_desc += " [REQUIRED]"
-            
-            description += field_desc + "\n"
-        
-        return description
+        try:
+            # weather_table_schema.txt is located one directory above this file (project root)
+            schema_path = Path(__file__).resolve().parents[1] / "weather_table_schema.txt"
+            content = schema_path.read_text(encoding="utf-8")
+            # Cache the content for subsequent calls
+            self._schema_description_cache = content
+            return content
+        except Exception as e:
+            logger.error(f"Error reading schema description from file: {e}")
+            # Provide a minimal fallback so the application can continue
+            return "# Weather Data Table Schema\n\nSchema description file not available."
     
-    def _get_field_description(self, field_name: str) -> str:
-        """
-        Get a description for common weather fields.
-        
-        Args:
-            field_name: Name of the field
-            
-        Returns:
-            Field description
-        """
-        # Common weather field descriptions
-        descriptions = {
-            'location': 'Geographic location name',
-            'city': 'City name',
-            'province': 'Province or state',
-            'country': 'Country name',
-            'latitude': 'Latitude coordinate',
-            'longitude': 'Longitude coordinate',
-            'temperature': 'Temperature reading',
-            'temp': 'Temperature reading',
-            'feels_like': 'Perceived temperature',
-            'humidity': 'Humidity percentage',
-            'pressure': 'Atmospheric pressure',
-            'wind_speed': 'Wind speed',
-            'wind_direction': 'Wind direction',
-            'weather_condition': 'Weather condition description',
-            'condition': 'Weather condition',
-            'precipitation': 'Precipitation amount',
-            'visibility': 'Visibility distance',
-            'timestamp': 'Data timestamp',
-            'date': 'Date of observation',
-            'time': 'Time of observation',
-            'updated_at': 'Last update timestamp',
-            'created_at': 'Record creation timestamp'
-        }
-        
-        # Try exact match first
-        if field_name.lower() in descriptions:
-            return descriptions[field_name.lower()]
-        
-        # Try partial match
-        for key, desc in descriptions.items():
-            if key in field_name.lower():
-                return desc
-        
-        return 'Data field'
     
     def get_sample_data_description(self, num_samples: int = 3) -> str:
         """
@@ -179,12 +120,13 @@ class SchemaManager:
 ## Query Guidelines:
 
 1. Always use the full table name in queries: `{full_table}`
-2. When creating a lat/long buffer in the query try and use ST_DWITHIN for better performance
+2. Partitioning by expressions of type FLOAT64 is not allowed in this BigQuery table.
+3. When creating a lat/long buffer in the query try and use ST_DWITHIN for better performance
     2a. Always convert rqst_lat_num and rqst_long_num from FLOAT64 to GEOGRAPHY type using ST_GEOGPOINT
-3. Use appropriate WHERE clauses to filter data
-4. Consider using LIMIT to restrict result size
-5. Use aggregation functions (AVG, MAX, MIN, COUNT) for analytics
-6. Format timestamps appropriately for time-based queries
+4. Use appropriate WHERE clauses to filter data
+5. Consider using LIMIT to restrict result size
+6. Use aggregation functions (AVG, MAX, MIN, COUNT) for analytics
+7. Format timestamps appropriately for time-based queries
 
 ## Example Queries:
 
