@@ -1,177 +1,138 @@
-"""Langchain SQL agent for querying weather data."""
+"""Langchain SQL agent for querying Cloud SQL (MySQL) weather data."""
 import logging
 from typing import Optional, Dict, Any
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
-from langchain.tools import tool
+from langchain_community.utilities import SQLDatabase
+from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from src.utils.config import Config
+from src.utils.cloudsql_helper import CloudSQLHelper
 from src.schema_manager import SchemaManager
-from src.utils.bigquery_helper import BigQueryHelper
 
 logger = logging.getLogger(__name__)
 
+SYSTEM_PROMPT = """You are a MySQL expert generating queries against a Cloud SQL database.
+
+Rules:
+- Use LIMIT to restrict results (max {max_results} rows).
+- For geographic distance: ST_Distance_Sphere(POINT(lon, lat), POINT(lon, lat)).
+- Use information_schema to discover tables when unsure.
+- Always check query syntax with sql_db_query_checker before executing.
+- Use JOINs to correlate data across tables when the question involves multiple data types.
+- Do NOT run DROP, DELETE, UPDATE, INSERT, or DDL statements.
+- Use backtick-quoted identifiers for table/column names with special characters.
+""".format(max_results=Config.MAX_QUERY_RESULTS)
+
+
 class WeatherAgent:
-    """Langchain-based tool agent for weather data queries."""
-    
+    """Langchain-based SQL agent for weather data queries."""
+
     def __init__(self):
         """Initialize the weather agent."""
         self.config = Config
-        self.schema_manager = SchemaManager()
-        self.bq_helper = BigQueryHelper(self.config.GCP_PROJECT_ID)
+        self.cloud_sql_helper = CloudSQLHelper()
+        self.schema_manager = SchemaManager(self.cloud_sql_helper)
         self.llm = None
         self.db = None
         self.agent = None
-        
+
         self._initialize_agent()
 
     def _initialize_agent(self) -> None:
         """Initialize the LLM, database connection, and agent."""
         try:
-            # Initialize OpenAI LLM
             logger.info(f"Initializing LLM: {self.config.OPENAI_MODEL}")
             self.llm = ChatOpenAI(
                 model=self.config.OPENAI_MODEL,
                 temperature=self.config.TEMPERATURE,
                 openai_api_key=self.config.OPENAI_API_KEY,
-                base_url='https://api.fuelix.ai/v1' # Custom base URL
+                base_url='https://api.fuelix.ai/v1'
             )
-            
-            # Create tool wrapper for execute_query
-            @tool
-            def execute_bigquery(query: str) -> str:
-                """Execute a BigQuery SQL query and return results.
-                
-                Args:
-                    query: SQL query to execute
-                    
-                Returns:
-                    Query results as a string
-                """
-                df = self.bq_helper.execute_query(query)
-                return df
-            
-            @tool
-            def validate_query(query: str) -> bool:
-                """
-                Validate a SQL query without executing it using bigquery helper.
-                
-                Args:
-                    query: SQL query to validate
-                    
-                Returns:
-                    True if query is valid, False otherwise
-                """
-                try:
-                    return self.bq_helper.validate_query(query)
-                except Exception as e:
-                    logger.error(f"Query validation failed: {e}")
-                    return False
 
-            
-            # Create SQL agent
-            logger.info("Creating Langchain tool-calling agent") # TODO: Dynamic Model
-            self.agent = create_agent(                           # TODO: Include a cache mechanism, for common locations (cities) by polygons in a txt file, have the agent refer to it first
-                model=self.llm,
-                tools=[execute_bigquery, validate_query],
-                system_prompt= """You are a helpful weather data expert. You have access to BigQuery tools. 
-                Make sure that the query does not include any destructive methods before executing.
-                Always validate the query before execution. If the query is invalid, read the error message and write a corrected query.
-                The BigQuery table you have access to does sorts data by latitude and longitude as FLOAT64, not location name. 
-                If asked about location, analyze the resulting latitude and longitude to determine an approximate location name.
-                Make sure to use the correct column names as per the schema, and create location buffers following the schema guidelines."""
+            # SQLDatabase wraps the engine for the LangChain toolkit
+            self.db = SQLDatabase(
+                self.cloud_sql_helper.get_engine(),
+                schema=self.config.CLOUD_SQL_DATABASE,
+                view_support=True,
+                max_string_length=500,
             )
-            # TODO: Vectorize fire data, and use metadata based filtering
+
+            toolkit = SQLDatabaseToolkit(db=self.db, llm=self.llm)
+            tools = toolkit.get_tools()  # list_tables, get_schema, query_checker, query
+
+            logger.info("Creating Langchain tool-calling agent")
+            self.agent = create_agent(
+                model=self.llm,
+                tools=tools,
+                system_prompt=SYSTEM_PROMPT,
+            )
+
             logger.info("Weather agent initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Error initializing agent: {e}")
             raise
-    
+
     def query(self, question: str) -> Dict[str, Any]:
         """
         Process a natural language query about weather data.
-        
+
         Args:
-            question: Natural language question about weather
-            
+            question: Natural language question
+
         Returns:
             Dictionary containing the answer and metadata
         """
         try:
             logger.info(f"Processing query: {question}")
-            
-            # Add schema context to the question
+
             enhanced_question = self._enhance_question(question)
-            
-            # Execute the agent
+
             result = self.agent.invoke(
                 {"messages": [{"role": "user", "content": enhanced_question}]}
             )
-            
-            # Extract answer from messages
+
             answer = "No answer generated"
             if 'messages' in result and len(result['messages']) > 0:
-                # Get the last message (assistant's response)
                 last_message = result['messages'][-1]
                 if hasattr(last_message, 'content'):
                     answer = last_message.content
                 elif isinstance(last_message, dict) and 'content' in last_message:
                     answer = last_message['content']
-            
-            response = {
+
+            logger.info("Query processed successfully")
+            return {
                 'question': question,
                 'answer': answer,
-                'success': True
+                'success': True,
             }
-            
-            logger.info("Query processed successfully")
-            return response
-            
+
         except Exception as e:
             logger.error(f"Error processing query: {e}")
             return {
                 'question': question,
                 'answer': f"Error processing query: {str(e)}",
                 'success': False,
-                'error': str(e)
+                'error': str(e),
             }
-    
+
     def _enhance_question(self, question: str) -> str:
-        """
-        Enhance the question with schema context.
-        
-        Args:
-            question: Original question
-            
-        Returns:
-            Enhanced question with context
-        """
-        # Get schema context
+        """Enhance the question with schema context."""
         schema_context = self.schema_manager.get_full_context(include_samples=False)
-        #TODO: Optimize SQL generation in step 2 for faster performance
-        enhanced = f"""
-You are a helpful assistant that answers questions about weather data stored in BigQuery.
+        return f"""You are a helpful assistant that answers questions about weather data stored in a Cloud SQL (MySQL) database.
 
 {schema_context}
 
 Important Instructions:
-1. Generate SQL queries to answer the user's question 
-2. Format your final answer in a clear, human-readable way
-3. Do not include the SQL query in your final answer unless explicitly requested
-4. If you need to make assumptions, state them clearly
-5. Only perform SELECT queries - no INSERT, UPDATE, or DELETE operations
+1. Generate MySQL SQL queries to answer the user's question.
+2. Format your final answer in a clear, human-readable way.
+3. Do not include the SQL query in your final answer unless explicitly requested.
+4. If you need to make assumptions, state them clearly.
+5. Only perform SELECT queries - no INSERT, UPDATE, DELETE, or DDL operations.
 
 User Question: {question}
 """
-        
-        return enhanced #TODO: Can add javascript within the SQL for more complex processing
-    
-    def get_schema_info(self) -> str:
-        """
-        Get schema information for display.
-        
-        Returns:
-            Formatted schema information
-        """
-        return self.schema_manager.get_full_context(include_samples=True)
-    
+
+    def get_schema_info(self, include_samples: bool = True) -> str:
+        """Get schema information for display."""
+        return self.schema_manager.get_full_context(include_samples=include_samples)

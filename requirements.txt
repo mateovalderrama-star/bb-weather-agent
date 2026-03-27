@@ -8,10 +8,11 @@ langchain-community==0.3.13
 streamlit==1.31.0
 rich==13.9.4
 
-# Google Cloud / BigQuery
-google-cloud-bigquery==3.28.0
-pyarrow==17.0.0
+# Cloud SQL (via Auth Proxy — direct TCP, no connector library needed)
+pymysql==1.1.0
+sqlalchemy==2.0.36
 pandas==2.2.3
 
 # Configuration
 python-dotenv==1.0.1
+

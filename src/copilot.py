@@ -201,7 +201,7 @@ You can ask questions in natural language, and I'll query the weather database f
 System Status:
 
 ✓ Weather Agent: Active
-✓ Database: {self.config.get_full_table_name()}
+✓ Database: Cloud SQL (MySQL) — {self.config.CLOUD_SQL_INSTANCE_CONNECTION_NAME}/{self.config.CLOUD_SQL_DATABASE}
 ✓ LLM Model: {self.config.OPENAI_MODEL}
 ✓ Conversation History: {len(self.conversation_history)} messages
 ✓ Max Query Results: {self.config.MAX_QUERY_RESULTS}
